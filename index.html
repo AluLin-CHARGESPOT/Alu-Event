@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CHARGESPOT 全球活動場域追蹤</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --blue:#185FA5;--blue-light:#E6F1FB;
+      --font:system-ui,-apple-system,'Segoe UI',sans-serif;
+      --bg:#F8FAFC;--bg2:#fff;--border:#E2E8F0;--border2:#CBD5E1;
+      --text:#0F172A;--text2:#475569;--text3:#94A3B8;
+      --info-bg:#EFF6FF;--info-border:#BFDBFE;--info-text:#1D4ED8;
+      --success-bg:#F0FDF4;--success-border:#BBF7D0;--success-text:#166534;
+      --radius:10px;--radius-lg:16px;
+    }
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+    button{font-family:var(--font);cursor:pointer;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text2);padding:6px 12px;font-size:13px;transition:all .15s}
+    button:hover{border-color:var(--blue);color:var(--blue)}
+    input{font-family:var(--font);font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:6px 10px;background:var(--bg2);color:var(--text);outline:none;width:100%}
+    input:focus{border-color:var(--blue)}
+
+    /* API KEY MODAL */
+    .api-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+    .api-card{background:#fff;border-radius:var(--radius-lg);padding:32px;width:100%;max-width:460px;display:flex;flex-direction:column;gap:16px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+    .api-card h2{font-size:16px;font-weight:600;color:var(--text)}
+    .api-card p{font-size:13px;color:var(--text2);line-height:1.7}
+    .api-card a{color:var(--blue);text-decoration:none}
+    .api-card a:hover{text-decoration:underline}
+    .api-input-row{display:flex;gap:8px}
+    .api-input-row input{flex:1}
+    .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:500}
+    .btn-primary:hover{opacity:.9;color:#fff}
+    .api-steps{font-size:12px;color:var(--text2);line-height:1.9;padding:12px 14px;background:var(--bg);border-radius:var(--radius);border:0.5px solid var(--border)}
+    .api-steps b{color:var(--blue)}
+    .free-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px;background:#DCFCE7;color:#166534;border:0.5px solid #BBF7D0;font-weight:500}
+
+    /* LOGIN */
+    .login-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;background:var(--bg)}
+    .login-logo{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .login-icon{width:44px;height:44px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center}
+    .login-icon i{color:#fff;font-size:24px}
+    .login-brand{font-size:20px;font-weight:600;color:var(--text)}
+    .login-brand span{color:var(--blue)}
+    .login-sub{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:40px}
+    .login-card{background:#fff;border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+    .login-btn{width:100%;height:48px;font-size:14px;font-weight:600;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s}
+    .login-btn:hover{opacity:.9;color:#fff}
+    .login-btn:disabled{opacity:.4;cursor:not-allowed}
+    .api-key-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--success-bg);border:0.5px solid var(--success-border);border-radius:var(--radius);font-size:12px;color:var(--success-text)}
+
+    /* DROPDOWN */
+    .dd-wrap{position:relative}
+    .dd-trigger{width:100%;height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;border:0.5px solid var(--border2);border-radius:var(--radius);background:#fff;cursor:pointer;transition:border-color .15s;user-select:none}
+    .dd-trigger:hover,.dd-trigger.open{border-color:var(--blue)}
+    .dd-trigger.open{border-bottom-left-radius:0;border-bottom-right-radius:0}
+    .dd-chevron{font-size:16px;color:var(--text3);transition:transform .2s;margin-left:auto}
+    .dd-trigger.open .dd-chevron{transform:rotate(180deg)}
+    .dd-menu{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:0.5px solid var(--blue);border-top:none;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius);z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+    .dd-menu.open{display:block}
+    .dd-search-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:0.5px solid var(--border);background:var(--bg)}
+    .dd-search-row i{font-size:15px;color:var(--text3)}
+    .dd-search-row input{border:none;background:transparent;padding:0;width:auto;flex:1}
+    .dd-search-row input:focus{border:none}
+    .dd-group-label{padding:6px 14px 4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--bg);border-bottom:0.5px solid var(--border)}
+    .dd-list{max-height:260px;overflow-y:auto}
+    .dd-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background .1s}
+    .dd-item:last-child{border-bottom:none}
+    .dd-item:hover,.dd-item.selected{background:var(--info-bg)}
+    .dd-flag{font-size:18px}
+    .dd-name{flex:1;font-size:14px;color:var(--text)}
+    .dd-region{font-size:11px;color:var(--text3)}
+    .dd-check{font-size:14px;color:var(--info-text)}
+    .dd-empty{padding:16px;text-align:center;font-size:13px;color:var(--text3)}
+
+    /* MAIN APP */
+    .main-app{display:none;flex-direction:column;min-height:100vh}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:0.5px solid var(--border);background:#fff;position:sticky;top:0;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .topbar-left{display:flex;align-items:center;gap:10px}
+    .topbar-icon{width:30px;height:30px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
+    .topbar-icon i{color:#fff;font-size:17px}
+    .topbar-brand{font-size:13px;font-weight:600;color:var(--text)}
+    .topbar-brand span{color:var(--blue)}
+    .topbar-sub{font-size:10px;color:var(--text3);letter-spacing:.06em}
+    .top-dd-wrap{position:relative}
+    .top-trigger{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);cursor:pointer;font-size:13px;color:var(--text);transition:all .15s;user-select:none}
+    .top-trigger:hover,.top-trigger.open{border-color:var(--blue)}
+    .top-menu{display:none;position:absolute;top:calc(100% + 4px);right:0;width:280px;background:#fff;border:0.5px solid var(--border2);border-radius:var(--radius-lg);z-index:30;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+    .top-menu.open{display:block}
+    .top-menu-hdr{padding:8px 14px 6px;font-size:11px;color:var(--text3);text-transform:uppercase;background:var(--bg);border-bottom:0.5px solid var(--border)}
+    .topbar-right{display:flex;align-items:center;gap:8px}
+    .key-status{font-size:11px;color:var(--success-text);background:var(--success-bg);border:0.5px solid var(--success-border);padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:4px}
+
+    .content{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;max-width:1200px;margin:0 auto;width:100%}
+    .date-nav{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+    .page-title{font-size:22px;font-weight:700;color:var(--text)}
+    .date-pill{display:flex;align-items:center;border:2px solid var(--blue);border-radius:30px;overflow:hidden;background:#fff}
+    .dp-btn{background:#fff;border:none;cursor:pointer;padding:6px 10px;color:var(--blue);font-size:15px;display:flex;align-items:center}
+    .dp-btn:hover{background:var(--blue-light)}
+    .dp-txt{padding:6px 16px;font-size:13px;font-weight:600;color:var(--blue);min-width:130px;text-align:center}
+    .range-tabs{display:flex;gap:4px;background:#fff;border:0.5px solid var(--border);border-radius:var(--radius);padding:3px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .rtab{padding:5px 12px;border-radius:8px;font-size:12px;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap;border:none;background:transparent}
+    .rtab.active{background:var(--blue);color:#fff}
+    .sec-label{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px}
+    .ai-btn-sm{font-size:11px;background:var(--info-bg);color:var(--info-text);border:0.5px solid var(--info-border);border-radius:var(--radius);padding:4px 12px;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:auto;white-space:nowrap}
+    .ai-btn-sm:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .ai-btn-main{font-size:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:6px 16px;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:auto;white-space:nowrap;font-weight:500}
+    .ai-btn-main:hover{opacity:.9;color:#fff}
+    .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media(max-width:600px){.tgrid{grid-template-columns:1fr}}
+    .tcard{background:#fff;border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;display:flex;gap:10px;align-items:flex-start;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .ticon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+    .ttitle{font-size:13px;font-weight:600;margin-bottom:3px}
+    .tdesc{font-size:12px;color:var(--text2);line-height:1.5}
+    .tbadge{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;border-radius:20px;margin-top:6px;font-weight:500}
+    .dscroll{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:thin}
+    .dchip{flex-shrink:0;width:56px;height:68px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:0.5px solid var(--border);background:#fff;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .dchip:hover{border-color:var(--blue)}
+    .dchip.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(24,95,165,.3)}
+    .dchip.weekend{background:#FFF5F5;border-color:#FFC5C5;color:#A32D2D}
+    .dchip.active{background:var(--blue);border-color:var(--blue);color:#fff}
+    .dc-dow{font-size:9px;opacity:.65;text-transform:uppercase}
+    .dc-day{font-size:22px;font-weight:700;line-height:1.1}
+    .dc-mon{font-size:9px;opacity:.5}
+    .ecard{background:#fff;border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .ecard-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:0.5px solid var(--border);background:var(--bg)}
+    .erow{display:flex;align-items:flex-start;gap:14px;padding:14px 18px;border-bottom:0.5px solid var(--border);transition:background .1s}
+    .erow:last-child{border-bottom:none}
+    .erow:hover{background:var(--bg)}
+    .edate{text-align:center;min-width:36px}
+    .edow{font-size:9px;color:var(--text3);text-transform:uppercase}
+    .eday{font-size:22px;font-weight:700;color:var(--text);line-height:1}
+    .ebar{width:3px;border-radius:2px;min-height:44px;flex-shrink:0;margin-top:4px}
+    .etitle{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .emeta{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+    .etype{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
+    .etime{font-size:11px;color:var(--text3)}
+    .evenue{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:4px}
+    .surge-tag{font-size:10px;padding:2px 7px;border-radius:20px;background:#FAEEDA;color:#854F0B;border:0.5px solid #EF9F27;display:inline-flex;align-items:center;gap:3px;font-weight:500}
+    .hint{padding:40px;text-align:center;color:var(--text3);font-size:13px;line-height:1.8}
+    .loading{display:flex;align-items:center;gap:8px;padding:32px;justify-content:center;color:var(--text3);font-size:13px}
+    .spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<!-- API KEY MODAL -->
+<div class="api-modal" id="api-modal">
+  <div class="api-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;background:#4285F4;border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="ti ti-key" style="color:#fff;font-size:22px"></i>
+        </div>
+        <div>
+          <h2>輸入 Gemini API Key</h2>
+          <div style="font-size:12px;color:var(--text3);margin-top:1px">Google AI Studio · 完全免費</div>
+        </div>
+      </div>
+      <span class="free-badge"><i class="ti ti-gift" style="font-size:12px"></i> 免費</span>
+    </div>
+
+    <p>這個工具使用 Google Gemini API 驅動 AI 搜尋功能。Gemini API 提供免費方案，不需要信用卡。Key 只儲存在你的瀏覽器中。</p>
+
+    <div class="api-steps">
+      <b>申請步驟（1分鐘完成）：</b><br>
+      1. 前往 <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
+      2. 用 Google 帳號登入<br>
+      3. 點「Create API Key」<br>
+      4. 複製 Key 貼到下方
+    </div>
+
+    <div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">Gemini API Key</div>
+      <div class="api-input-row">
+        <input type="password" id="api-key-input" placeholder="AIza..."/>
+        <button class="btn-primary" onclick="saveKey()"><i class="ti ti-check"></i> 確認</button>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);text-align:center">
+      <i class="ti ti-shield-lock" style="font-size:12px"></i>
+      Key 僅儲存在你的瀏覽器，不會傳送到任何第三方
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div class="login-page" id="login-page" style="display:none">
+  <div class="login-logo">
+    <div class="login-icon"><i class="ti ti-bolt"></i></div>
+    <div>
+      <div class="login-brand">CHARGESPOT <span>活動場域</span></div>
+      <div class="login-sub">Global Event Tracker · Powered by Gemini</div>
+    </div>
+  </div>
+  <div class="login-card">
+    <div style="font-size:15px;font-weight:600;color:var(--text);text-align:center">選擇國家 / 地區</div>
+    <div style="font-size:13px;color:var(--text3);text-align:center;line-height:1.6;margin-top:-6px">選擇市場後介面語言將自動切換為當地語言</div>
+    <div class="dd-wrap" id="lw">
+      <div class="dd-trigger" id="lt" onclick="toggleDD('l')">
+        <span id="lf" style="font-size:20px">🌐</span>
+        <span id="ln" style="font-size:14px;color:var(--text3)">請選擇國家 / 地區...</span>
+        <i class="ti ti-chevron-down dd-chevron"></i>
+      </div>
+      <div class="dd-menu" id="lm">
+        <div class="dd-search-row">
+          <i class="ti ti-search"></i>
+          <input type="text" id="lq" placeholder="搜尋國家..." oninput="fil('l',this.value)" onclick="event.stopPropagation()"/>
+        </div>
+        <div class="dd-list" id="ll"></div>
+      </div>
+    </div>
+    <div class="api-key-bar">
+      <i class="ti ti-shield-check" style="font-size:14px"></i>
+      Gemini API Key 已設定
+      <button onclick="changeKey()" style="margin-left:auto;font-size:11px;padding:2px 8px;color:var(--text3)">更換</button>
+    </div>
+    <button class="login-btn" id="eb" onclick="enter()" disabled>
+      <i class="ti ti-arrow-right"></i> 進入活動追蹤
+    </button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="main-app" id="main-app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon"><i class="ti ti-bolt"></i></div>
+      <div>
+        <div class="topbar-brand">CHARGESPOT <span>活動場域</span></div>
+        <div class="topbar-sub" id="tsub">—</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="key-status"><i class="ti ti-sparkles" style="font-size:12px"></i> Gemini 已連接</span>
+      <div class="top-dd-wrap" id="tw">
+        <div class="top-trigger" id="tt" onclick="toggleDD('t')">
+          <span id="tf" style="font-size:16px">🌐</span>
+          <span id="tn" style="font-size:13px">—</span>
+          <i class="ti ti-chevron-down" style="font-size:14px;margin-left:4px;color:var(--text3);transition:transform .2s"></i>
+        </div>
+        <div class="top-menu" id="tm">
+          <div class="top-menu-hdr" id="tml">—</div>
+          <div class="dd-search-row">
+            <i class="ti ti-search"></i>
+            <input type="text" id="tq" placeholder="Search..." oninput="fil('t',this.value)" onclick="event.stopPropagation()"/>
+          </div>
+          <div class="dd-list" id="tl" style="max-height:280px"></div>
+        </div>
+      </div>
+      <button onclick="goLogin()" style="color:var(--text3);padding:6px 8px" title="返回">
+        <i class="ti ti-logout"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="date-nav">
+      <div class="page-title" id="ptitle">—</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="date-pill">
+          <button class="dp-btn" onclick="navD(-1)"><i class="ti ti-chevron-left"></i></button>
+          <div class="dp-txt" id="ddis">—</div>
+          <button class="dp-btn" onclick="navD(1)"><i class="ti ti-chevron-right"></i></button>
+        </div>
+        <div class="range-tabs" id="rtabs"></div>
+      </div>
+    </div>
+
+    <div class="sec-label">
+      <i class="ti ti-train" style="font-size:14px"></i>
+      <span id="ltraf">—</span>
+      <button class="ai-btn-sm" onclick="fetchTraffic()">
+        <i class="ti ti-sparkles"></i><span id="ltrafb">—</span>
+      </button>
+    </div>
+    <div class="tgrid" id="tgrid"></div>
+
+    <div class="sec-label">
+      <i class="ti ti-calendar" style="font-size:14px"></i>
+      <span id="ldscroll">—</span>
+      <button class="ai-btn-main" onclick="fetchEvents()">
+        <i class="ti ti-sparkles"></i><span id="lsearch">—</span>
+      </button>
+    </div>
+    <div class="dscroll" id="dscroll"></div>
+
+    <div class="ecard">
+      <div class="ecard-hdr">
+        <strong id="edate" style="font-size:14px;font-weight:600;color:var(--text)">—</strong>
+        <span id="ecnt" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+      <div id="ebody"><div class="hint">—</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── API KEY (Gemini) ─────────────────────────────────────
+let API_KEY = localStorage.getItem('cs_gemini_key') || '';
+
+function saveKey() {
+  const k = document.getElementById('api-key-input').value.trim();
+  if (!k.startsWith('AIza') && !k.startsWith('AQ.')) { alert('請輸入正確的 Gemini API Key'); return; }
+  API_KEY = k;
+  localStorage.setItem('cs_gemini_key', k);
+  document.getElementById('api-modal').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+}
+
+function changeKey() {
+  document.getElementById('api-key-input').value = '';
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('api-modal').style.display = 'flex';
+}
+
+window.addEventListener('load', () => {
+  if (API_KEY) {
+    document.getElementById('api-modal').style.display = 'none';
+    document.getElementById('login-page').style.display = 'flex';
+  }
+  fil('l', '');
+});
+
+// ── GEMINI API CALL ──────────────────────────────────────
+async function geminiCall(prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      tools: [{ google_search: {} }],
+      generationConfig: { responseMimeType: 'application/json' }
+    })
+  });
+  const data = await r.json();
+  if (data.error) throw new Error(data.error.message);
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+  return text.replace(/```json|```/g, '').trim();
+}
+
+// ── LOCALE ───────────────────────────────────────────────
+function mkEN(name,mname,traffic,tp){
+  return{lang:'en',langName:mname||'English Mode',
+    ui:{rangeTitle:{day:"Today's Events",week:"This Week",month:"This Month",report:'Logistics Report'},
+      rangeTabs:['Today','Week','Month','Report'],
+      trafficLabel:'Transit & Operations',trafficBtn:'AI Analyse',
+      dateScrollLabel:'Quick Date',searchBtn:'AI Search Events',
+      eventsHint:`Select a date and click 'AI Search Events'`,
+      switchMarket:'Switch Market',noEvents:'No events found',
+      searching:`Searching ${name} events...`,trafficLoading:'Analysing...',
+      lH:'🔥 High',lM:'📊 Medium',lL:'✅ Normal'},
+    traffic,
+    trafficPrompt:tp||`Analyse transit crowd trends in ${name} this week. Impact on CHARGESPOT rental demand. Return JSON only (no markdown): [{"icon":"✈️","title":"title","desc":"detail","level":"high|medium|low"}]`,
+    eventPrompt:(ds,r)=>`You are a CHARGESPOT assistant. Search for large events in ${name} from ${ds} for ${r} (concerts, exhibitions, sports, festivals etc). Mark isSurge:true if over 5000 attendees. Return JSON only (no markdown): [{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'Concert',exhibition:'Exhibition',sports:'Sports',festival:'Festival',other:'Other'},
+    surgeLabel:'SURGE',
+    days:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    mons:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    fmtDate:d=>d.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})};
+}
+function mkZH(name,mname,traffic,tp){
+  return{lang:'zh',langName:mname||'繁體中文 Mode',
+    ui:{rangeTitle:{day:'單日活動總覽',week:'一週活動總覽',month:'月度活動總覽',report:'運補週報'},
+      rangeTabs:['單日','一週','一個月','運補週報'],
+      trafficLabel:'交通 & 營運重點',trafficBtn:'AI 分析',
+      dateScrollLabel:'日期快速切換',searchBtn:'AI 搜尋活動',
+      eventsHint:'選擇日期後點擊「AI 搜尋活動」',
+      switchMarket:'切換市場',noEvents:'此時段未找到相關活動',
+      searching:`正在搜尋${name}的活動...`,trafficLoading:'正在分析交通人潮...',
+      lH:'🔥 高人潮',lM:'📊 中人潮',lL:'✅ 一般'},
+    traffic,
+    trafficPrompt:tp||`請分析${name}本週交通人潮，以及對 CHARGESPOT 租借需求的影響。只回傳JSON（不要markdown）：[{"icon":"🚄","title":"標題","desc":"一句說明","level":"high|medium|low"}]`,
+    eventPrompt:(ds,r)=>`你是 CHARGESPOT 助手。搜尋${name}在「${ds}起的${r}」的中大型活動（演唱會、展覽、運動賽事、音樂節等）。5000人以上標 isSurge:true。只回傳JSON（不要markdown）：[{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'演唱會',exhibition:'展覽',sports:'運動賽事',festival:'音樂祭',other:'其他'},
+    surgeLabel:'SUDDEN SURGE',
+    days:['日','一','二','三','四','五','六'],
+    mons:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    fmtDate:d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（週${'日一二三四五六'[d.getDay()]}）`};
+}
+function mkES(name,mname,traffic){
+  return{lang:'es',langName:mname||'Español Mode',
+    ui:{rangeTitle:{day:'Eventos de Hoy',week:'Esta Semana',month:'Este Mes',report:'Informe Logístico'},
+      rangeTabs:['Hoy','Semana','Mes','Informe'],
+      trafficLabel:'Transporte & Operaciones',trafficBtn:'Análisis IA',
+      dateScrollLabel:'Seleccionar Fecha',searchBtn:'Buscar Eventos con IA',
+      eventsHint:"Selecciona una fecha y haz clic en 'Buscar Eventos'",
+      switchMarket:'Cambiar Mercado',noEvents:'No se encontraron eventos',
+      searching:`Buscando eventos en ${name}...`,trafficLoading:'Analizando...',
+      lH:'🔥 Alto',lM:'📊 Medio',lL:'✅ Normal'},
+    traffic,
+    trafficPrompt:`Analiza las tendencias de transporte en ${name} esta semana. Impacto en la demanda de CHARGESPOT. Solo JSON (sin markdown): [{"icon":"✈️","title":"título","desc":"detalle","level":"high|medium|low"}]`,
+    eventPrompt:(ds,r)=>`Asistente CHARGESPOT. Busca eventos grandes en ${name} desde ${ds} por ${r}. isSurge:true si 5000+. Solo JSON (sin markdown): [{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'Concierto',exhibition:'Exposición',sports:'Deporte',festival:'Festival',other:'Otro'},
+    surgeLabel:'SURGE 🔥',
+    days:['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],
+    mons:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    fmtDate:d=>d.toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'})};
+}
+function mkPT(name,mname,traffic){
+  return{lang:'pt',langName:mname||'Português Mode',
+    ui:{rangeTitle:{day:'Eventos de Hoje',week:'Esta Semana',month:'Este Mês',report:'Relatório Logístico'},
+      rangeTabs:['Hoje','Semana','Mês','Relatório'],
+      trafficLabel:'Transporte & Operações',trafficBtn:'Análise IA',
+      dateScrollLabel:'Selecionar Data',searchBtn:'Buscar Eventos com IA',
+      eventsHint:"Selecione uma data e clique em 'Buscar Eventos'",
+      switchMarket:'Trocar Mercado',noEvents:'Nenhum evento encontrado',
+      searching:`Buscando eventos em ${name}...`,trafficLoading:'Analisando...',
+      lH:'🔥 Alto',lM:'📊 Médio',lL:'✅ Normal'},
+    traffic,
+    trafficPrompt:`Analise as tendências de transporte em ${name} esta semana. Impacto na demanda do CHARGESPOT. Somente JSON (sem markdown): [{"icon":"✈️","title":"título","desc":"detalhe","level":"high|medium|low"}]`,
+    eventPrompt:(ds,r)=>`Assistente CHARGESPOT. Busque eventos grandes em ${name} de ${ds} por ${r}. isSurge:true se 5000+. Somente JSON (sem markdown): [{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'Show',exhibition:'Exposição',sports:'Esporte',festival:'Festival',other:'Outro'},
+    surgeLabel:'SURGE 🔥',
+    days:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
+    mons:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+    fmtDate:d=>d.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})};
+}
+
+const LOCALE={
+  '日本':{lang:'ja',langName:'日本語モード',
+    ui:{rangeTitle:{day:'本日のイベント',week:'今週のイベント',month:'今月のイベント',report:'配送レポート'},
+      rangeTabs:['本日','今週','今月','配送レポート'],
+      trafficLabel:'交通・運営状況',trafficBtn:'AI 分析',dateScrollLabel:'日付を選択',searchBtn:'AIでイベント検索',
+      eventsHint:'日付を選んで「AIでイベント検索」をクリックしてください',
+      switchMarket:'国・地域を切り替え',noEvents:'該当するイベントが見つかりませんでした',
+      searching:'Geminiが日本のイベントを検索中...',trafficLoading:'交通情報を分析中...',
+      lH:'🔥 混雑',lM:'📊 普通',lL:'✅ 余裕'},
+    traffic:[
+      {icon:'🚅',label:'新幹線',desc:'東京〜大阪・北海道方面',bg:'#E6F1FB',color:'#0C447C'},
+      {icon:'🚇',label:'東京メトロ',desc:'山手線・中央線・東西線',bg:'#EAF3DE',color:'#27500A'},
+      {icon:'✈️',label:'国内線',desc:'羽田・成田・伊丹・関西',bg:'#EEEDFE',color:'#3C3489'},
+    ],
+    trafficPrompt:'日本今週の交通混雑状況を分析してください：新幹線の予約状況、東京メトロ・JRの混雑路線、羽田・成田空港の混雑。CHARGESPOTのモバイルバッテリー貸出需要への影響も含めて。JSONのみ返してください（markdownなし）：[{"icon":"🚅","title":"タイトル","desc":"一行説明","level":"high|medium|low"}]',
+    eventPrompt:(ds,r)=>`あなたはCHARGESPOTのアシスタントです。${ds}から${r}の間に日本で開催される大型イベント（コンサート・展覧会・スポーツ・フェスなど）をウェブで検索してください。5000人以上はisSurge:true。JSONのみ返してください（markdownなし）：[{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'コンサート',exhibition:'展覧会',sports:'スポーツ',festival:'フェスティバル',other:'その他'},
+    surgeLabel:'急増予測 🔥',
+    days:['日','月','火','水','木','金','土'],
+    mons:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    fmtDate:d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}曜日）`},
+  '台灣':mkZH('台灣','繁體中文モード',[
+    {icon:'🚄',label:'高鐵',desc:'台北↔台中↔高雄',bg:'#E6F1FB',color:'#0C447C'},
+    {icon:'🚂',label:'台鐵',desc:'全線購票熱度',bg:'#EAF3DE',color:'#27500A'},
+    {icon:'✈️',label:'國內航班',desc:'松山、桃園、高雄機場',bg:'#EEEDFE',color:'#3C3489'},
+  ],'請分析台灣本週交通人潮：高鐵購票、台鐵、桃園/松山/高雄機場，以及對 CHARGESPOT 租借需求的影響。只回傳JSON（不要markdown）：[{"icon":"🚄","title":"標題","desc":"一句說明","level":"high|medium|low"}]'),
+  '香港':mkZH('香港','廣東話モード',[
+    {icon:'🚇',label:'港鐵 MTR',desc:'東鐵、荃灣、機場快線',bg:'#E6F1FB',color:'#0C447C'},
+    {icon:'✈️',label:'香港國際機場',desc:'入境/出境人潮',bg:'#EAF3DE',color:'#27500A'},
+    {icon:'⛴️',label:'渡輪',desc:'中港碼頭、澳門航線',bg:'#EEEDFE',color:'#3C3489'},
+  ],'請分析香港本週交通人潮：港鐵、香港國際機場、中港碼頭及澳門渡輪，以及對 CHARGESPOT 租借需求的影響。只回傳JSON（不要markdown）：[{"icon":"🚇","title":"標題","desc":"一句說明","level":"high|medium|low"}]'),
+  '澳門':mkZH('澳門','繁體中文モード',[
+    {icon:'⛴️',label:'港澳渡輪',desc:'噴射飛航、金光飛航',bg:'#E6F1FB',color:'#0C447C'},
+    {icon:'🚌',label:'跨境巴士',desc:'珠海、廣州方向',bg:'#EAF3DE',color:'#27500A'},
+    {icon:'✈️',label:'澳門國際機場',desc:'入境/出境人潮',bg:'#EEEDFE',color:'#3C3489'},
+  ]),
+  '韓國':{lang:'ko',langName:'한국어 모드',
+    ui:{rangeTitle:{day:'오늘의 이벤트',week:'이번 주 이벤트',month:'이번 달 이벤트',report:'물류 보고서'},
+      rangeTabs:['오늘','이번 주','이번 달','보고서'],
+      trafficLabel:'교통 & 운영 현황',trafficBtn:'AI 분석',dateScrollLabel:'날짜 선택',searchBtn:'AI 이벤트 검색',
+      eventsHint:"날짜를 선택하고 'AI 이벤트 검색'을 클릭하세요",
+      switchMarket:'국가・지역 전환',noEvents:'이 기간에 이벤트가 없습니다',
+      searching:'Gemini가 한국 이벤트를 검색 중...',trafficLoading:'교통 데이터 분析 중...',
+      lH:'🔥 혼잡',lM:'📊 보통',lL:'✅ 여유'},
+    traffic:[
+      {icon:'🚄',label:'KTX',desc:'서울↔부산↔광주',bg:'#E6F1FB',color:'#0C447C'},
+      {icon:'🚇',label:'서울 지하철',desc:'1~9호선 혼잡도',bg:'#EAF3DE',color:'#27500A'},
+      {icon:'✈️',label:'국내선',desc:'김포, 김해, 제주',bg:'#EEEDFE',color:'#3C3489'},
+    ],
+    trafficPrompt:'한국 이번 주 교통 혼잡도: KTX 예매, 서울 지하철, 김포/김해/제주 항공편. CHARGESPOT 수요 영향. JSON만 반환 (markdown 없이): [{"icon":"🚄","title":"제목","desc":"설명","level":"high|medium|low"}]',
+    eventPrompt:(ds,r)=>`CHARGESPOT 도우미. ${ds}부터 ${r} 동안 한국 대형 이벤트 검색. 5000명 이상 isSurge:true. JSON만 반환 (markdown 없이): [{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'콘서트',exhibition:'전시',sports:'스포츠',festival:'페스티벌',other:'기타'},
+    surgeLabel:'급증 예측 🔥',
+    days:['일','월','화','수','목','금','토'],
+    mons:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+    fmtDate:d=>`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]}요일)`},
+  '中國':{lang:'zh-CN',langName:'简体中文模式',
+    ui:{rangeTitle:{day:'今日活动',week:'本周活动',month:'本月活动',report:'补货周报'},
+      rangeTabs:['今日','本周','本月','补货周报'],
+      trafficLabel:'交通 & 运营重点',trafficBtn:'AI 分析',dateScrollLabel:'日期快速切换',searchBtn:'AI 搜索活动',
+      eventsHint:'选择日期后点击「AI 搜索活动」',
+      switchMarket:'切换市场',noEvents:'该时段未找到相关活动',
+      searching:'正在搜索中国的活动...',trafficLoading:'正在分析交通人流...',
+      lH:'🔥 高人流',lM:'📊 中人流',lL:'✅ 正常'},
+    traffic:[
+      {icon:'🚄',label:'高铁',desc:'京沪、京广、沿海高铁',bg:'#E6F1FB',color:'#0C447C'},
+      {icon:'✈️',label:'国内航班',desc:'北京、上海、广州、深圳',bg:'#EAF3DE',color:'#27500A'},
+      {icon:'🚇',label:'城市地铁',desc:'北京、上海、广州地铁',bg:'#EEEDFE',color:'#3C3489'},
+    ],
+    trafficPrompt:'请分析中国本周交通人流：高铁购票、国内航班、城市地铁，以及对 CHARGESPOT 租借需求的影响。只返回JSON（不要markdown）：[{"icon":"🚄","title":"标题","desc":"一句说明","level":"high|medium|low"}]',
+    eventPrompt:(ds,r)=>`你是 CHARGESPOT 助手。搜索中国在「${ds}起的${r}」的大型活动。5000人以上标 isSurge:true。只返回JSON（不要markdown）：[{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'演唱会',exhibition:'展览',sports:'体育赛事',festival:'音乐节',other:'其他'},
+    surgeLabel:'急增预警 🔥',
+    days:['日','一','二','三','四','五','六'],
+    mons:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    fmtDate:d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（周${'日一二三四五六'[d.getDay()]}）`},
+  '新加坡':mkEN('Singapore','English Mode',[{icon:'🚇',label:'MRT',desc:'North-South, East-West, Circle Line',bg:'#E6F1FB',color:'#0C447C'},{icon:'✈️',label:'Changi Airport',desc:'International arrivals / departures',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'Cross-border Bus',desc:'Malaysia routes',bg:'#EEEDFE',color:'#3C3489'}]),
+  '印度':mkEN('India','English Mode',[{icon:'🚆',label:'Indian Railways',desc:'Mumbai, Delhi, Bangalore',bg:'#E6F1FB',color:'#0C447C'},{icon:'✈️',label:'Domestic Flights',desc:'DEL, BOM, BLR, MAA',bg:'#EAF3DE',color:'#27500A'},{icon:'🚇',label:'Metro',desc:'Delhi Metro, Mumbai Metro',bg:'#EEEDFE',color:'#3C3489'}]),
+  '泰國':mkEN('Thailand','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'BKK, CNX, HKT',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'BTS Skytrain',desc:'Sukhumvit & Silom Lines',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'Intercity Bus',desc:'Bangkok to provinces',bg:'#EEEDFE',color:'#3C3489'}]),
+  '越南':mkEN('Vietnam','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'HAN, SGN, DAD',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚆',label:'North-South Railway',desc:'Hanoi ↔ Ho Chi Minh',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'Sleeper Bus',desc:'Long-distance routes',bg:'#EEEDFE',color:'#3C3489'}]),
+  '印尼':mkEN('Indonesia','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'CGK, DPS, SUB',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Jakarta MRT/LRT',desc:'North-South corridor',bg:'#EAF3DE',color:'#27500A'},{icon:'⛴️',label:'Inter-island Ferry',desc:'Java, Bali, Sumatra',bg:'#EEEDFE',color:'#3C3489'}]),
+  '馬來西亞':mkEN('Malaysia','English Mode',[{icon:'🚆',label:'KTM / ETS',desc:'KL ↔ Penang ↔ JB',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Klang Valley Rail',desc:'LRT, MRT, Monorail',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Domestic Flights',desc:'KUL, PEN, BKI, KCH',bg:'#EEEDFE',color:'#3C3489'}]),
+  '菲律賓':mkEN('Philippines','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'MNL, CEB, DVO',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Metro Manila Rail',desc:'LRT-1, LRT-2, MRT-3',bg:'#EAF3DE',color:'#27500A'},{icon:'⛴️',label:'Inter-island Ferry',desc:'Manila, Cebu, Davao',bg:'#EEEDFE',color:'#3C3489'}]),
+  '澳洲':mkEN('Australia','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'SYD, MEL, BNE, PER',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚆',label:'Intercity Rail',desc:'NSW TrainLink, V/Line',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'Coach',desc:'Greyhound, Murray',bg:'#EEEDFE',color:'#3C3489'}]),
+  '紐西蘭':mkEN('New Zealand','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'AKL, WLG, CHC',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚆',label:'InterIslander',desc:'Wellington ↔ Picton',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'InterCity',desc:'North & South Island',bg:'#EEEDFE',color:'#3C3489'}]),
+  '英國':mkEN('UK','English Mode',[{icon:'🚆',label:'National Rail',desc:'London, Manchester, Edinburgh',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'London Underground',desc:'Central, Jubilee, Northern',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Domestic Flights',desc:'LHR, MAN, EDI',bg:'#EEEDFE',color:'#3C3489'}]),
+  '法國':{lang:'fr',langName:'Mode Français',
+    ui:{rangeTitle:{day:"Événements d'Aujourd'hui",week:'Cette Semaine',month:'Ce Mois',report:'Rapport Logistique'},
+      rangeTabs:["Aujourd'hui",'Semaine','Mois','Rapport'],
+      trafficLabel:'Transport & Opérations',trafficBtn:'Analyse IA',dateScrollLabel:'Choisir une Date',searchBtn:'Rechercher des Événements',
+      eventsHint:"Sélectionnez une date et cliquez sur 'Rechercher'",
+      switchMarket:'Changer de Marché',noEvents:"Aucun événement trouvé",
+      searching:'Recherche des événements en France...',trafficLoading:'Analyse en cours...',
+      lH:'🔥 Chargé',lM:'📊 Moyen',lL:'✅ Fluide'},
+    traffic:[{icon:'🚄',label:'TGV / Eurostar',desc:'Paris, Lyon, Marseille',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Métro Parisien',desc:'Lignes 1–14, RER',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Vols Intérieurs',desc:'CDG, ORY, LYS, MRS',bg:'#EEEDFE',color:'#3C3489'}],
+    trafficPrompt:'Analysez les tendances de trafic en France cette semaine. Impact sur la demande CHARGESPOT. JSON uniquement (sans markdown): [{"icon":"🚄","title":"t","desc":"d","level":"high|medium|low"}]',
+    eventPrompt:(ds,r)=>`Assistant CHARGESPOT. Recherchez les grands événements en France du ${ds} pour ${r}. isSurge:true si 5000+. JSON uniquement (sans markdown): [{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'Concert',exhibition:'Exposition',sports:'Sport',festival:'Festival',other:'Autre'},
+    surgeLabel:'SURGE 🔥',days:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],
+    mons:['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'],
+    fmtDate:d=>d.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})},
+  '德國':{lang:'de',langName:'Deutsch Modus',
+    ui:{rangeTitle:{day:'Heutige Veranstaltungen',week:'Diese Woche',month:'Diesen Monat',report:'Logistikbericht'},
+      rangeTabs:['Heute','Woche','Monat','Bericht'],
+      trafficLabel:'Verkehr & Betrieb',trafficBtn:'KI-Analyse',dateScrollLabel:'Datum wählen',searchBtn:'Events mit KI suchen',
+      eventsHint:"Datum wählen und 'Events suchen' klicken",
+      switchMarket:'Markt wechseln',noEvents:'Keine Veranstaltungen gefunden',
+      searching:'Suche Events in Deutschland...',trafficLoading:'Analyse läuft...',
+      lH:'🔥 Überfüllt',lM:'📊 Normal',lL:'✅ Entspannt'},
+    traffic:[{icon:'🚄',label:'ICE / IC',desc:'Berlin, München, Hamburg',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'U-Bahn / S-Bahn',desc:'Berlin, München, Hamburg',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Inlandsflüge',desc:'FRA, MUC, BER, DUS',bg:'#EEEDFE',color:'#3C3489'}],
+    trafficPrompt:'Analysiere Verkehrstrends in Deutschland diese Woche. Auswirkung auf CHARGESPOT-Nachfrage. Nur JSON (kein markdown): [{"icon":"🚄","title":"t","desc":"d","level":"high|medium|low"}]',
+    eventPrompt:(ds,r)=>`CHARGESPOT Assistent. Suche Großveranstaltungen in Deutschland ab ${ds} für ${r}. isSurge:true bei 5000+. Nur JSON (kein markdown): [{"title":"","date":"YYYY-MM-DD","time":"HH:MM","venue":"","type":"concert|exhibition|sports|festival|other","isSurge":false,"url":""}]`,
+    typeLabels:{concert:'Konzert',exhibition:'Ausstellung',sports:'Sport',festival:'Festival',other:'Sonstiges'},
+    surgeLabel:'SURGE 🔥',days:['So','Mo','Di','Mi','Do','Fr','Sa'],
+    mons:['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],
+    fmtDate:d=>d.toLocaleDateString('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric'})},
+  '義大利':mkEN('Italy','English Mode',[{icon:'🚄',label:'Trenitalia / Italo',desc:'Rome, Milan, Naples',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Metro',desc:'Rome, Milan underground',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Domestic Flights',desc:'FCO, MXP, BGY, NAP',bg:'#EEEDFE',color:'#3C3489'}]),
+  '西班牙':mkES('España','Modo Español',[{icon:'🚄',label:'AVE / Renfe',desc:'Madrid, Barcelona, Sevilla',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Metro',desc:'Madrid y Barcelona',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Vuelos Nacionales',desc:'MAD, BCN, AGP',bg:'#EEEDFE',color:'#3C3489'}]),
+  '荷蘭':mkEN('Netherlands','English Mode',[{icon:'🚆',label:'NS Rail',desc:'Amsterdam, Rotterdam, Utrecht',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'GVB / Metro',desc:'Amsterdam tram & metro',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Schiphol',desc:'International hub',bg:'#EEEDFE',color:'#3C3489'}]),
+  '瑞士':mkEN('Switzerland','English Mode',[{icon:'🚆',label:'SBB / CFF',desc:'Zürich, Geneva, Bern',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚋',label:'Tram',desc:'Zürich, Bern, Basel',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Flights',desc:'ZRH, GVA',bg:'#EEEDFE',color:'#3C3489'}]),
+  '葡萄牙':mkPT('Portugal','Modo Português',[{icon:'🚆',label:'CP Rail',desc:'Lisboa, Porto, Algarve',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Metro',desc:'Lisboa e Porto',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Voos',desc:'LIS, OPO',bg:'#EEEDFE',color:'#3C3489'}]),
+  '瑞典':mkEN('Sweden','English Mode',[{icon:'🚄',label:'SJ Rail',desc:'Stockholm, Gothenburg, Malmö',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Tunnelbana',desc:'Stockholm metro',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Domestic Flights',desc:'ARN, GOT, MMX',bg:'#EEEDFE',color:'#3C3489'}]),
+  '丹麥':mkEN('Denmark','English Mode',[{icon:'🚆',label:'DSB Rail',desc:'Copenhagen, Aarhus',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Metro',desc:'Copenhagen M1/M2/M3',bg:'#EAF3DE',color:'#27500A'},{icon:'✈️',label:'Flights',desc:'CPH',bg:'#EEEDFE',color:'#3C3489'}]),
+  '美國':mkEN('USA','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'JFK, LAX, ORD, ATL',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚆',label:'Amtrak',desc:'Northeast Corridor',bg:'#EAF3DE',color:'#27500A'},{icon:'🚇',label:'Subway',desc:'NYC, LA, Chicago, DC',bg:'#EEEDFE',color:'#3C3489'}]),
+  '加拿大':mkEN('Canada','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'YYZ, YVR, YUL',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚆',label:'VIA Rail',desc:'Toronto, Montreal, Vancouver',bg:'#EAF3DE',color:'#27500A'},{icon:'🚇',label:'Metro',desc:'Toronto TTC, Montreal STM',bg:'#EEEDFE',color:'#3C3489'}]),
+  '墨西哥':mkES('México','Modo Español',[{icon:'✈️',label:'Vuelos Nacionales',desc:'MEX, GDL, MTY, CUN',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Metro CDMX',desc:'Líneas 1–12',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'ADO / ETN',desc:'Autobús larga distancia',bg:'#EEEDFE',color:'#3C3489'}]),
+  '阿聯酋':mkEN('UAE','English Mode',[{icon:'✈️',label:'Emirates / Etihad',desc:'DXB, AUH hubs',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Dubai Metro',desc:'Red & Green Lines',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'Intercity Bus',desc:'Dubai ↔ Abu Dhabi',bg:'#EEEDFE',color:'#3C3489'}]),
+  '沙烏地阿拉伯':mkEN('Saudi Arabia','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'RUH, JED, DMM',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚄',label:'Haramain HSR',desc:'Mecca ↔ Medina',bg:'#EAF3DE',color:'#27500A'},{icon:'🚇',label:'Riyadh Metro',desc:'Lines 1–6',bg:'#EEEDFE',color:'#3C3489'}]),
+  '巴西':mkPT('Brasil','Modo Português (BR)',[{icon:'✈️',label:'Voos Domésticos',desc:'GRU, GIG, BSB',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Metrô',desc:'São Paulo, Rio',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'Rodoviária',desc:'Ônibus longa distância',bg:'#EEEDFE',color:'#3C3489'}]),
+  '阿根廷':mkES('Argentina','Modo Español',[{icon:'✈️',label:'Vuelos Nacionales',desc:'EZE, AEP, COR',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚇',label:'Subte',desc:'Buenos Aires A–H',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'Colectivo',desc:'Autobús larga distancia',bg:'#EEEDFE',color:'#3C3489'}]),
+  '南非':mkEN('South Africa','English Mode',[{icon:'✈️',label:'Domestic Flights',desc:'JNB, CPT, DUR',bg:'#E6F1FB',color:'#0C447C'},{icon:'🚆',label:'Gautrain',desc:'Johannesburg ↔ Pretoria',bg:'#EAF3DE',color:'#27500A'},{icon:'🚌',label:'Intercape',desc:'Long-distance coach',bg:'#EEEDFE',color:'#3C3489'}]),
+};
+
+const ALL=[
+  {flag:'🇯🇵',name:'日本',r:'亞太'},{flag:'🇹🇼',name:'台灣',r:'亞太'},
+  {flag:'🇭🇰',name:'香港',r:'亞太'},{flag:'🇲🇴',name:'澳門',r:'亞太'},
+  {flag:'🇰🇷',name:'韓國',r:'亞太'},{flag:'🇸🇬',name:'新加坡',r:'亞太'},
+  {flag:'🇹🇭',name:'泰國',r:'亞太'},{flag:'🇻🇳',name:'越南',r:'亞太'},
+  {flag:'🇮🇩',name:'印尼',r:'亞太'},{flag:'🇲🇾',name:'馬來西亞',r:'亞太'},
+  {flag:'🇵🇭',name:'菲律賓',r:'亞太'},{flag:'🇨🇳',name:'中國',r:'亞太'},{flag:'🇮🇳',name:'印度',r:'亞太'},
+  {flag:'🇦🇺',name:'澳洲',r:'大洋洲'},{flag:'🇳🇿',name:'紐西蘭',r:'大洋洲'},
+  {flag:'🇬🇧',name:'英國',r:'歐洲'},{flag:'🇫🇷',name:'法國',r:'歐洲'},{flag:'🇩🇪',name:'德國',r:'歐洲'},
+  {flag:'🇮🇹',name:'義大利',r:'歐洲'},{flag:'🇪🇸',name:'西班牙',r:'歐洲'},{flag:'🇳🇱',name:'荷蘭',r:'歐洲'},
+  {flag:'🇨🇭',name:'瑞士',r:'歐洲'},{flag:'🇵🇹',name:'葡萄牙',r:'歐洲'},{flag:'🇸🇪',name:'瑞典',r:'歐洲'},
+  {flag:'🇩🇰',name:'丹麥',r:'歐洲'},
+  {flag:'🇺🇸',name:'美國',r:'北美'},{flag:'🇨🇦',name:'加拿大',r:'北美'},{flag:'🇲🇽',name:'墨西哥',r:'北美'},
+  {flag:'🇦🇪',name:'阿聯酋',r:'中東'},{flag:'🇸🇦',name:'沙烏地阿拉伯',r:'中東'},
+  {flag:'🇧🇷',name:'巴西',r:'南美'},{flag:'🇦🇷',name:'阿根廷',r:'南美'},
+  {flag:'🇿🇦',name:'南非',r:'非洲'},
+];
+
+let SC=null,AC=null,AL=null,cd=new Date(),cr='day',busy=false;
+
+function apply(loc){
+  const u=loc.ui;
+  document.getElementById('tsub').textContent=loc.langName;
+  document.getElementById('ptitle').textContent=u.rangeTitle[cr]||u.rangeTitle.day;
+  const rs=['day','week','month','report'];
+  document.getElementById('rtabs').innerHTML=u.rangeTabs.map((t,i)=>`<div class="rtab ${cr===rs[i]?'active':''}" onclick="setR('${rs[i]}',this)">${t}</div>`).join('');
+  document.getElementById('ltraf').textContent=u.trafficLabel;
+  document.getElementById('ltrafb').textContent=u.trafficBtn;
+  document.getElementById('ldscroll').textContent=u.dateScrollLabel;
+  document.getElementById('lsearch').textContent=u.searchBtn;
+  document.getElementById('tml').textContent=u.switchMarket;
+  document.getElementById('tgrid').innerHTML=loc.traffic.map(t=>`
+    <div class="tcard">
+      <div class="ticon" style="background:${t.bg}">${t.icon}</div>
+      <div><div class="ttitle" style="color:${t.color}">${t.label}</div>
+      <div class="tdesc">${t.desc}</div>
+      <div class="tbadge" style="background:${t.bg};color:${t.color}"><i class="ti ti-sparkles" style="font-size:10px"></i> ${u.trafficBtn} →</div></div>
+    </div>`).join('');
+  document.getElementById('ebody').innerHTML=`<div class="hint">${u.eventsHint}</div>`;
+  document.getElementById('ecnt').textContent='';
+  updDate();renderScroll();
+}
+
+function sw(c){
+  AC=c;AL=LOCALE[c.name];
+  document.getElementById('tf').textContent=c.flag;
+  document.getElementById('tn').textContent=c.name;
+  document.getElementById('tm').classList.remove('open');
+  document.getElementById('tt').classList.remove('open');
+  apply(AL);
+}
+
+function fil(w,q){
+  const el=document.getElementById(w==='l'?'ll':'tl');
+  const f=ALL.filter(c=>c.name.includes(q)||c.r.includes(q)||c.flag.includes(q));
+  if(!f.length){el.innerHTML=`<div class="dd-empty">找不到「${q}」</div>`;return}
+  const g={};f.forEach(c=>{if(!g[c.r])g[c.r]=[];g[c.r].push(c)});
+  let h='';
+  Object.keys(g).forEach(r=>{
+    if(!q)h+=`<div class="dd-group-label">${r}</div>`;
+    g[r].forEach(c=>{
+      const s=w==='l'?SC===c:AC===c;
+      h+=`<div class="dd-item ${s?'selected':''}" onclick="pick('${w}','${c.name}')">
+        <span class="dd-flag">${c.flag}</span><span class="dd-name">${hl(c.name,q)}</span>
+        <span class="dd-region">${q?c.r:''}</span>
+        ${s?`<i class="ti ti-check dd-check"></i>`:''}
+      </div>`;
+    });
+  });
+  el.innerHTML=h;
+}
+
+function hl(n,q){
+  if(!q)return n;const i=n.indexOf(q);if(i<0)return n;
+  return n.slice(0,i)+`<span style="font-weight:700;color:var(--blue)">${n.slice(i,i+q.length)}</span>`+n.slice(i+q.length);
+}
+
+function toggleDD(w){
+  const m=document.getElementById(w==='l'?'lm':'tm');
+  const t=document.getElementById(w==='l'?'lt':'tt');
+  ['l','t'].forEach(x=>{
+    if(x!==w){document.getElementById(x==='l'?'lm':'tm')?.classList.remove('open');document.getElementById(x==='l'?'lt':'tt')?.classList.remove('open');}
+  });
+  const op=m.classList.toggle('open');
+  t.classList.toggle('open',op);
+  if(op){const qi=document.getElementById(w==='l'?'lq':'tq');if(qi){qi.value='';setTimeout(()=>qi.focus(),60)}fil(w,'');}
+}
+
+function pick(w,name){
+  const c=ALL.find(x=>x.name===name);if(!c)return;
+  if(w==='l'){
+    SC=c;
+    document.getElementById('lf').textContent=c.flag;
+    const tx=document.getElementById('ln');tx.textContent=c.name;tx.style.color='var(--text)';
+    document.getElementById('eb').disabled=false;
+    document.getElementById('lm').classList.remove('open');document.getElementById('lt').classList.remove('open');
+  } else sw(c);
+}
+
+document.addEventListener('click',e=>{
+  [['lw','lm','lt'],['tw','tm','tt']].forEach(([w,m,t])=>{
+    const el=document.getElementById(w);
+    if(el&&!el.contains(e.target)){document.getElementById(m)?.classList.remove('open');document.getElementById(t)?.classList.remove('open');}
+  });
+});
+
+function enter(){if(!SC)return;sw(SC);document.getElementById('login-page').style.display='none';document.getElementById('main-app').style.display='flex';}
+function goLogin(){document.getElementById('main-app').style.display='none';document.getElementById('login-page').style.display='flex';}
+
+function renderScroll(){
+  if(!AL)return;
+  const el=document.getElementById('dscroll');
+  const base=new Date();base.setDate(base.getDate()-3);
+  let h='';
+  for(let i=0;i<18;i++){
+    const d=new Date(base);d.setDate(base.getDate()+i);
+    const sel=d.toDateString()===cd.toDateString();
+    const wk=d.getDay()===0||d.getDay()===6;
+    const k=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    h+=`<div class="dchip ${sel?'active':wk?'weekend':''}" onclick="pickD('${k}')">
+      <div class="dc-dow">${AL.days[d.getDay()]}</div>
+      <div class="dc-day">${d.getDate()}</div>
+      <div class="dc-mon">${AL.mons[d.getMonth()]}</div>
+    </div>`;
+  }
+  el.innerHTML=h;
+}
+
+function pickD(k){const[y,m,d]=k.split('-').map(Number);cd=new Date(y,m,d);renderScroll();updDate();}
+
+function updDate(){
+  if(!AL)return;
+  const d=cd;
+  document.getElementById('ptitle').textContent=AL.ui.rangeTitle[cr]||AL.ui.rangeTitle.day;
+  document.getElementById('ddis').textContent=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('edate').textContent=AL.fmtDate(d);
+}
+
+function navD(dir){
+  const d=new Date(cd);
+  if(cr==='month')d.setMonth(d.getMonth()+dir);
+  else if(cr==='week')d.setDate(d.getDate()+dir*7);
+  else d.setDate(d.getDate()+dir);
+  cd=d;renderScroll();updDate();
+}
+
+function setR(r,el){
+  cr=r;document.querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');updDate();
+}
+
+async function fetchTraffic(){
+  if(busy||!AL)return;busy=true;
+  const tg=document.getElementById('tgrid');
+  tg.innerHTML=`<div class="tcard" style="grid-column:1/-1;justify-content:center"><div class="loading"><div class="spin"></div>${AL.ui.trafficLoading}</div></div>`;
+  try{
+    const text=await geminiCall(AL.trafficPrompt);
+    let items=[];try{items=JSON.parse(text)}catch(e){}
+    const bg={high:'#FAEEDA',medium:'#EAF3DE',low:'#E6F1FB'};
+    const cl={high:'#854F0B',medium:'#27500A',low:'#0C447C'};
+    if(!items.length){tg.innerHTML=`<div class="tcard" style="grid-column:1/-1"><div style="padding:16px;font-size:13px;color:var(--text3)">暫無資料，請稍後再試</div></div>`;busy=false;return;}
+    tg.innerHTML=items.map(t=>`
+      <div class="tcard">
+        <div class="ticon" style="background:${bg[t.level]||'#E6F1FB'};font-size:20px">${t.icon}</div>
+        <div><div class="ttitle" style="color:${cl[t.level]||'#0C447C'}">${t.title}</div>
+        <div class="tdesc">${t.desc}</div>
+        <div class="tbadge" style="background:${bg[t.level]};color:${cl[t.level]}">
+          ${t.level==='high'?AL.ui.lH:t.level==='medium'?AL.ui.lM:AL.ui.lL}
+        </div></div>
+      </div>`).join('');
+  }catch(e){
+    tg.innerHTML=`<div class="tcard" style="grid-column:1/-1"><div style="color:#A32D2D;padding:16px;font-size:13px">❌ ${e.message||'請確認 API Key 是否正確'}</div></div>`;
+  }
+  busy=false;
+}
+
+async function fetchEvents(){
+  if(busy||!AL||!AC)return;busy=true;
+  const el=document.getElementById('ebody');
+  el.innerHTML=`<div class="loading"><div class="spin"></div>${AL.ui.searching}</div>`;
+  const ds=`${cd.getFullYear()}-${String(cd.getMonth()+1).padStart(2,'0')}-${String(cd.getDate()).padStart(2,'0')}`;
+  const rm={ja:{day:'1日間',week:'7日間',month:'1ヶ月',report:'週末'},ko:{day:'하루',week:'일주일',month:'한 달',report:'이번 주말'},fr:{day:'1 jour',week:'1 semaine',month:'1 mois',report:'ce week-end'},de:{day:'1 Tag',week:'1 Woche',month:'1 Monat',report:'dieses Wochenende'},es:{day:'1 día',week:'1 semana',month:'1 mes',report:'este fin de semana'},pt:{day:'1 dia',week:'1 semana',month:'1 mês',report:'este fim de semana'},en:{day:'1 day',week:'1 week',month:'1 month',report:'this weekend'},zh:{day:'當天',week:'一週',month:'一個月',report:'本週週末'},'zh-CN':{day:'当天',week:'一周',month:'一个月',report:'本周末'}};
+  const r=rm[AL.lang]||rm.zh;
+  try{
+    const text=await geminiCall(AL.eventPrompt(ds,r[cr]||r.day));
+    let ev=[];try{ev=JSON.parse(text)}catch(e){}
+    renderEv(ev);
+  }catch(e){
+    el.innerHTML=`<div class="hint" style="color:#A32D2D">❌ ${e.message||'請確認 API Key 是否正確'}</div>`;
+  }
+  busy=false;
+}
+
+const tStyle=t=>({concert:'background:#EEEDFE;color:#3C3489',exhibition:'background:#E6F1FB;color:#0C447C',sports:'background:#EAF3DE;color:#27500A',festival:'background:#FAEEDA;color:#633806',other:'background:#F1F5F9;color:#64748B'}[t]||'');
+const bColor=t=>({concert:'#7F77DD',exhibition:'#378ADD',sports:'#639922',festival:'#BA7517',other:'#94A3B8'}[t]||'#94A3B8');
+
+function renderEv(ev){
+  const el=document.getElementById('ebody');
+  const cnt=document.getElementById('ecnt');
+  if(!ev.length){el.innerHTML=`<div class="hint">${AL.ui.noEvents}</div>`;cnt.textContent='0';return}
+  const s=ev.filter(e=>e.isSurge).length;
+  cnt.textContent=`${ev.length} items${s?` · ${s} ${AL.surgeLabel}`:''}`;
+  el.innerHTML=ev.map(e=>{
+    const d=new Date(e.date+'T00:00:00');
+    return`<div class="erow">
+      <div class="edate"><div class="edow">${AL.days[d.getDay()]}</div><div class="eday">${d.getDate()}</div></div>
+      <div class="ebar" style="background:${bColor(e.type)}"></div>
+      <div style="flex:1">
+        <div class="emeta"><span class="etype" style="${tStyle(e.type)}">${AL.typeLabels[e.type]||e.type}</span><span class="etime">${e.time||'—'}</span></div>
+        <div class="etitle">${e.title}${e.isSurge?`<span class="surge-tag"><i class="ti ti-flame" style="font-size:10px"></i>${AL.surgeLabel}</span>`:''}</div>
+        <div class="evenue"><i class="ti ti-map-pin" style="font-size:12px"></i>${e.venue}</div>
+      </div>
+      ${e.url?`<a href="${e.url}" target="_blank" style="color:var(--text3);font-size:15px;padding:4px;flex-shrink:0"><i class="ti ti-external-link"></i></a>`:''}
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
