@@ -266,6 +266,10 @@ input:focus{border-color:var(--blue)}
           <div class="dd-list" id="tl" style="max-height:280px"></div>
         </div>
       </div>
+      <div id="lang-switcher" style="display:none;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);font-size:12px;cursor:pointer" onclick="toggleLang()">
+        <i class="ti ti-language" style="font-size:14px;color:var(--blue)"></i>
+        <span id="lang-label">EN</span>
+      </div>
       <button onclick="goLogin()" style="color:var(--text3);padding:5px 8px" title="返回"><i class="ti ti-logout"></i></button>
     </div>
   </div>
@@ -330,8 +334,8 @@ input:focus{border-color:var(--blue)}
         </div>
         <div class="venue-list-inner" id="venue-list"></div>
         <div class="vadd-area">
-          <input type="text" id="v-name" placeholder="場域名稱（如：東京ドーム）" style="font-size:12px;height:32px"/>
-          <input type="text" id="v-url" placeholder="官網 URL（選填）" style="font-size:12px;height:32px"/>
+          <input type="text" id="v-name" placeholder="Venue name" style="font-size:12px;height:32px"/>
+          <input type="text" id="v-url" placeholder="Website URL (optional)" style="font-size:12px;height:32px"/>
           <button id="add-venue-btn" onclick="addVenue()" style="font-size:12px;height:32px;background:var(--blue);color:#fff;border:none;display:flex;align-items:center;justify-content:center;gap:4px">
             <i class="ti ti-plus"></i> 新增場域
           </button>
@@ -559,7 +563,7 @@ JSON만 반환 (markdown 없이), 최대 6개, 중요도순:
   },
   '新加坡':mkEN('Singapore','English Mode',[]),
   '印度':mkEN('India','English Mode',[]),
-  '泰國':mkEN('Thailand','English Mode',[]),
+  '泰國':mkEN('Thailand','English Mode',[]),  // 英文介面
   '越南':mkEN('Vietnam','English Mode',[]),
   '印尼':mkEN('Indonesia','English Mode',[]),
   '馬來西亞':mkEN('Malaysia','English Mode',[]),
@@ -587,20 +591,33 @@ JSON만 반환 (markdown 없이), 최대 6개, 중요도순:
 };
 
 const ALL=[
-  {flag:'🇯🇵',name:'日本',r:'亞太'},{flag:'🇹🇼',name:'台灣',r:'亞太'},
-  {flag:'🇭🇰',name:'香港',r:'亞太'},{flag:'🇲🇴',name:'澳門',r:'亞太'},
-  {flag:'🇰🇷',name:'韓國',r:'亞太'},{flag:'🇸🇬',name:'新加坡',r:'亞太'},
-  {flag:'🇹🇭',name:'泰國',r:'亞太'},{flag:'🇻🇳',name:'越南',r:'亞太'},
-  {flag:'🇮🇩',name:'印尼',r:'亞太'},{flag:'🇲🇾',name:'馬來西亞',r:'亞太'},
-  {flag:'🇵🇭',name:'菲律賓',r:'亞太'},{flag:'🇨🇳',name:'中國',r:'亞太'},{flag:'🇮🇳',name:'印度',r:'亞太'},
-  {flag:'🇦🇺',name:'澳洲',r:'大洋洲'},{flag:'🇳🇿',name:'紐西蘭',r:'大洋洲'},
-  {flag:'🇬🇧',name:'英國',r:'歐洲'},{flag:'🇫🇷',name:'法國',r:'歐洲'},{flag:'🇩🇪',name:'德國',r:'歐洲'},
-  {flag:'🇮🇹',name:'義大利',r:'歐洲'},{flag:'🇪🇸',name:'西班牙',r:'歐洲'},{flag:'🇳🇱',name:'荷蘭',r:'歐洲'},
-  {flag:'🇨🇭',name:'瑞士',r:'歐洲'},{flag:'🇵🇹',name:'葡萄牙',r:'歐洲'},{flag:'🇸🇪',name:'瑞典',r:'歐洲'},
-  {flag:'🇩🇰',name:'丹麥',r:'歐洲'},
-  {flag:'🇺🇸',name:'美國',r:'北美'},{flag:'🇨🇦',name:'加拿大',r:'北美'},{flag:'🇲🇽',name:'墨西哥',r:'北美'},
+  // ── 主要市場（置頂）──
+  {flag:'🇯🇵',name:'日本',r:'主要市場'},{flag:'🇭🇰',name:'香港',r:'主要市場'},
+  {flag:'🇹🇭',name:'泰國',r:'主要市場'},{flag:'🇹🇼',name:'台灣',r:'主要市場'},
+  {flag:'🇦🇺',name:'澳洲',r:'主要市場'},{flag:'🇲🇾',name:'馬來西亞',r:'主要市場'},
+  {flag:'🇮🇹',name:'義大利',r:'主要市場'},{flag:'🇬🇧',name:'英國',r:'主要市場'},
+  {flag:'🇨🇳',name:'中國',r:'主要市場'},
+  // ── 亞太 ──
+  {flag:'🇲🇴',name:'澳門',r:'亞太'},{flag:'🇰🇷',name:'韓國',r:'亞太'},
+  {flag:'🇸🇬',name:'新加坡',r:'亞太'},{flag:'🇻🇳',name:'越南',r:'亞太'},
+  {flag:'🇮🇩',name:'印尼',r:'亞太'},{flag:'🇵🇭',name:'菲律賓',r:'亞太'},
+  {flag:'🇮🇳',name:'印度',r:'亞太'},
+  // ── 大洋洲 ──
+  {flag:'🇳🇿',name:'紐西蘭',r:'大洋洲'},
+  // ── 歐洲 ──
+  {flag:'🇫🇷',name:'法國',r:'歐洲'},
+  {flag:'🇩🇪',name:'德國',r:'歐洲'},
+  {flag:'🇪🇸',name:'西班牙',r:'歐洲'},{flag:'🇳🇱',name:'荷蘭',r:'歐洲'},
+  {flag:'🇨🇭',name:'瑞士',r:'歐洲'},{flag:'🇵🇹',name:'葡萄牙',r:'歐洲'},
+  {flag:'🇸🇪',name:'瑞典',r:'歐洲'},{flag:'🇩🇰',name:'丹麥',r:'歐洲'},
+  // ── 北美 ──
+  {flag:'🇺🇸',name:'美國',r:'北美'},{flag:'🇨🇦',name:'加拿大',r:'北美'},
+  {flag:'🇲🇽',name:'墨西哥',r:'北美'},
+  // ── 中東 ──
   {flag:'🇦🇪',name:'阿聯酋',r:'中東'},{flag:'🇸🇦',name:'沙烏地阿拉伯',r:'中東'},
+  // ── 南美 ──
   {flag:'🇧🇷',name:'巴西',r:'南美'},{flag:'🇦🇷',name:'阿根廷',r:'南美'},
+  // ── 非洲 ──
   {flag:'🇿🇦',name:'南非',r:'非洲'},
 ];
 
@@ -675,13 +692,25 @@ async function runInsight(){
     if(!items.length){el.innerHTML=`<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text3);font-size:13px">暫無資料，請點「重整」再試</div>`;return;}
     el.innerHTML=items.map(it=>{
       const c=catColor[it.category]||catColor.transport;
+      const areaTag=it.area?`<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:rgba(255,255,255,.6);color:${c.color};border:0.5px solid ${c.border};font-weight:600">📍 ${it.area}</span>`:'';
+      const lvMap={
+        zh:{high:'🔥 高',medium:'📊 中',low:'✅ 低'},
+        'zh-CN':{high:'🔥 高',medium:'📊 中',low:'✅ 低'},
+        ja:{high:'🔥 混雑',medium:'📊 普通',low:'✅ 余裕'},
+        ko:{high:'🔥 혼잡',medium:'📊 보통',low:'✅ 여유'},
+        en:{high:'🔥 High',medium:'📊 Medium',low:'✅ Low'},
+      };
+      const lv=lvMap[AL?.lang]||lvMap.en;
       return`<div class="icard" style="background:${c.bg};border-color:${c.border}">
         <div class="icard-icon" style="background:rgba(255,255,255,.6)">${it.icon}</div>
-        <div>
-          <div class="icard-title" style="color:${c.color}">${it.title}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
+            ${areaTag}
+            <div class="icard-title" style="color:${c.color}">${it.title}</div>
+          </div>
           <div class="icard-desc">${it.desc}</div>
           <div class="icard-badge" style="background:rgba(255,255,255,.5);color:${c.color}">
-            ${it.level==='high'?'🔥 高':it.level==='medium'?'📊 中':'✅ 低'}
+            ${it.level==='high'?lv.high:it.level==='medium'?lv.medium:lv.low}
           </div>
         </div>
       </div>`;
@@ -826,7 +855,8 @@ function fil(w,q){
   const g={};f.forEach(c=>{if(!g[c.r])g[c.r]=[];g[c.r].push(c)});
   let h='';
   Object.keys(g).forEach(r=>{
-    if(!q)h+=`<div class="dd-group-label">${r}</div>`;
+    const groupLabel = r==='主要市場' ? '⭐ 主要市場 CHARGESPOT' : r;
+    if(!q)h+=`<div class="dd-group-label" style="${r==='主要市場'?'color:var(--blue);background:var(--blue-light)':''}">${groupLabel}</div>`;
     g[r].forEach(c=>{
       const s=w==='l'?SC===c:AC===c;
       h+=`<div class="dd-item ${s?'selected':''}" onclick="pick('${w}','${c.name}')">
@@ -867,7 +897,32 @@ document.addEventListener('click',e=>{
   });
 });
 
-function enter(){if(!SC)return;sw(SC);document.getElementById('login-page').style.display='none';document.getElementById('main-app').style.display='flex';}
+// 語言切換（for 泰國/馬來西亞等可切換英文或當地語言）
+let usingLocalLang = true;
+function toggleLang(){
+  usingLocalLang = !usingLocalLang;
+  document.getElementById('lang-label').textContent = usingLocalLang ? 'LOCAL' : 'EN';
+  if(!AC) return;
+  // 重新套用語言
+  const localeKey = usingLocalLang ? AC.name : '__en__';
+  AL = usingLocalLang ? LOCALE[AC.name] : mkEN_override(AC.name);
+  apply(AL);
+  runInsightThenEvents();
+}
+function mkEN_override(name){
+  const base = LOCALE[name];
+  return {...base, lang:'en', langName:'English Mode',
+    ui:{...mkEN(name,'English Mode',[]).ui}};
+}
+
+function enter(){
+  if(!SC)return;
+  usingLocalLang=true;
+  document.getElementById('lang-label').textContent='LOCAL';
+  sw(SC);
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('main-app').style.display='flex';
+}
 function goLogin(){document.getElementById('main-app').style.display='none';document.getElementById('login-page').style.display='flex';}
 
 // ── DATE ─────────────────────────────────────────────────
