@@ -25,18 +25,7 @@ input{font-family:var(--font);font-size:13px;border:0.5px solid var(--border2);b
 input:focus{border-color:var(--blue)}
 
 /* API MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
-.modal-card{background:#fff;border-radius:var(--radius-lg);padding:32px;width:100%;max-width:460px;display:flex;flex-direction:column;gap:16px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
-.modal-card h2{font-size:16px;font-weight:600;color:var(--text)}
-.modal-card p{font-size:13px;color:var(--text2);line-height:1.7}
-.modal-card a{color:var(--blue);text-decoration:none}
-.steps-box{font-size:12px;color:var(--text2);line-height:2;padding:12px 14px;background:var(--bg);border-radius:var(--radius);border:0.5px solid var(--border)}
-.steps-box b{color:var(--blue)}
-.free-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px;background:#DCFCE7;color:#166534;border:0.5px solid #BBF7D0;font-weight:500}
-.btn-row{display:flex;gap:8px}
-.btn-row input{flex:1}
-.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:500}
-.btn-primary:hover{opacity:.9;color:#fff}
+
 
 /* LOGIN */
 .login-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;background:var(--bg)}
@@ -171,40 +160,6 @@ input:focus{border-color:var(--blue)}
 </head>
 <body>
 
-<!-- API MODAL -->
-<div class="modal-bg" id="api-modal">
-  <div class="modal-card">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:40px;height:40px;background:#4285F4;border-radius:10px;display:flex;align-items:center;justify-content:center">
-          <i class="ti ti-key" style="color:#fff;font-size:22px"></i>
-        </div>
-        <div>
-          <h2>輸入 Gemini API Key</h2>
-          <div style="font-size:12px;color:var(--text3)">Google AI Studio · 免費使用</div>
-        </div>
-      </div>
-      <span class="free-badge"><i class="ti ti-gift" style="font-size:12px"></i> 免費</span>
-    </div>
-    <p>這個工具使用 Google Gemini API。Key 只儲存在你的瀏覽器中，不會傳送到任何第三方。</p>
-    <div class="steps-box">
-      <b>申請步驟（1分鐘）：</b><br>
-      1. 前往 <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
-      2. 用 Google 帳號登入<br>
-      3. 點「Create API Key」→ 選「Default Gemini Project」<br>
-      4. 複製 Key 貼到下方
-    </div>
-    <div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">Gemini API Key</div>
-      <div class="btn-row">
-        <input type="password" id="api-key-input" placeholder="AIzaSy... 或 AQ.Ab8RN6..."/>
-        <button class="btn-primary" onclick="saveKey()"><i class="ti ti-check"></i> 確認</button>
-      </div>
-    </div>
-    <div style="font-size:11px;color:var(--text3);text-align:center">Key 僅儲存在你的瀏覽器，不會離開你的裝置</div>
-  </div>
-</div>
-
 <!-- LOGIN -->
 <div class="login-page" id="login-page" style="display:none">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
@@ -230,10 +185,7 @@ input:focus{border-color:var(--blue)}
         <div class="dd-list" id="ll"></div>
       </div>
     </div>
-    <div class="key-bar">
-      <i class="ti ti-shield-check" style="font-size:14px"></i> Gemini API Key 已設定
-      <button onclick="changeKey()" style="margin-left:auto;font-size:11px;padding:2px 8px;color:var(--text3)">更換</button>
-    </div>
+
     <button class="login-btn" id="eb" onclick="enter()" disabled>
       <i class="ti ti-arrow-right"></i> 進入活動追蹤
     </button>
@@ -347,21 +299,8 @@ input:focus{border-color:var(--blue)}
 
 <script>
 // ── API KEY ──────────────────────────────────────────────
-let API_KEY=localStorage.getItem('cs_gemini_key')||'';
-function saveKey(){
-  const k=document.getElementById('api-key-input').value.trim();
-  if(!k){alert('請輸入 API Key');return;}
-  API_KEY=k;localStorage.setItem('cs_gemini_key',k);
-  document.getElementById('api-modal').style.display='none';
-  document.getElementById('login-page').style.display='flex';
-}
-function changeKey(){
-  document.getElementById('api-key-input').value='';
-  document.getElementById('login-page').style.display='none';
-  document.getElementById('api-modal').style.display='flex';
-}
+
 window.addEventListener('load',()=>{
-  document.getElementById('api-modal').style.display='none';
   document.getElementById('login-page').style.display='flex';
   fil('l','');
 });
@@ -861,8 +800,7 @@ function fil(w,q){
     return 0;
   });
   sortedGroups.forEach(r=>{
-    const groupLabel = r==='主要市場' ? '⭐ 主要市場' : r;
-    if(!q)h+=`<div class="dd-group-label" style="${r==='主要市場'?'color:var(--blue);background:var(--blue-light)':''}">${groupLabel}</div>`;
+    if(!q && r!=='主要市場')h+=`<div class="dd-group-label">${r}</div>`;
     g[r].forEach(c=>{
       const s=w==='l'?SC===c:AC===c;
       h+=`<div class="dd-item ${s?'selected':''}" onclick="pick('${w}','${c.name}')">
