@@ -354,33 +354,23 @@ function changeKey(){
   document.getElementById('api-modal').style.display='flex';
 }
 window.addEventListener('load',()=>{
-  if(API_KEY){document.getElementById('api-modal').style.display='none';document.getElementById('login-page').style.display='flex';}
+  document.getElementById('api-modal').style.display='none';
+  document.getElementById('login-page').style.display='flex';
   fil('l','');
 });
 
 // ── GEMINI CALL ──────────────────────────────────────────
-async function geminiCall(prompt, retries=2){
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${API_KEY}`;
-  try{
-    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],tools:[{google_search:{}}],generationConfig:{responseMimeType:'application/json'}})});
-    const data=await r.json();
-    if(data.error){
-      // Rate limit: wait and retry
-      if((data.error.message||'').includes('quota') && retries>0){
-        await sleep(20000);
-        return geminiCall(prompt, retries-1);
-      }
-      throw new Error(data.error.message);
-    }
-    return(data.candidates?.[0]?.content?.parts?.[0]?.text||'[]').replace(/```json|```/g,'').trim();
-  }catch(e){
-    if(retries>0 && e.message && e.message.includes('quota')){
-      await sleep(20000);
-      return geminiCall(prompt, retries-1);
-    }
-    throw e;
-  }
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3mAU4jEEeV1YtEhRdkEukJ3-WhZJeMEsMMhFQ4eRfRc9JJO-0rL4Rvzf8si4uOmQogw/exec';
+
+async function geminiCall(prompt){
+  const r = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ prompt })
+  });
+  const data = await r.json();
+  if(data.error) throw new Error(data.error);
+  return data.result || '[]';
 }
 async function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
