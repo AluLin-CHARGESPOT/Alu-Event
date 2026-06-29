@@ -362,19 +362,27 @@ window.addEventListener('load',()=>{
 // ── GEMINI CALL ──────────────────────────────────────────
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3mAU4jEEeV1YtEhRdkEukJ3-WhZJeMEsMMhFQ4eRfRc9JJO-0rL4Rvzf8si4uOmQogw/exec';
 
-function geminiCall(prompt) {
+function jsonpCall(params) {
   return new Promise((resolve, reject) => {
     const cbName = 'cb_' + Math.random().toString(36).slice(2);
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      document.getElementById(cbName)?.remove();
+      reject(new Error('Timeout'));
+    }, 60000);
     window[cbName] = (data) => {
+      clearTimeout(timer);
       delete window[cbName];
       document.getElementById(cbName)?.remove();
       if(data.error) reject(new Error(data.error));
       else resolve(data.result || '[]');
     };
+    const qs = Object.entries({...params, callback: cbName})
+      .map(([k,v]) => k+'='+encodeURIComponent(v)).join('&');
     const script = document.createElement('script');
     script.id = cbName;
-    script.src = APPS_SCRIPT_URL + '?callback=' + cbName + '&prompt=' + encodeURIComponent(prompt);
-    script.onerror = () => { reject(new Error('Network error')); };
+    script.src = APPS_SCRIPT_URL + '?' + qs;
+    script.onerror = () => { clearTimeout(timer); reject(new Error('Script load error')); };
     document.head.appendChild(script);
   });
 }
@@ -611,7 +619,7 @@ async function runInsight(){
   const el=document.getElementById('insight-grid');
   el.innerHTML=`<div style="grid-column:1/-1"><div class="loading"><div class="spin"></div>${AL.ui.analyzingInsight}</div></div>`;
   try{
-    const text=await geminiCall(AL.insightPrompt(AC.name));
+    const text=await jsonpCall({type:'insight', country:AC.name});
     let items=[];try{items=JSON.parse(text)}catch(e){}
     if(!items.length){el.innerHTML=`<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text3);font-size:13px">暫無資料，請點「重整」再試</div>`;return;}
     el.innerHTML=items.map(it=>{
@@ -645,7 +653,13 @@ async function fetchEvents(){
   const venueUrls=venues.filter(v=>v.url).map(v=>`${v.name}(${v.url})`).join('、');
   const venueNames=venues.map(v=>v.name).join('、');
   try{
-    const text=await geminiCall(AL.eventPrompt(ds,r,venueUrls,venueNames));
+    const text=await jsonpCall({
+      type:'events',
+      country:AC.name,
+      date:ds,
+      range:cr,
+      venues:venueNames||''
+    });
     let ev=[];try{ev=JSON.parse(text)}catch(e){}
     renderEv(ev);
   }catch(e){
