@@ -359,13 +359,28 @@ window.addEventListener('load',()=>{
 });
 
 // ── GEMINI CALL ──────────────────────────────────────────
-async function geminiCall(prompt){
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
-  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],tools:[{google_search:{}}],generationConfig:{responseMimeType:'application/json'}})});
-  const data=await r.json();
-  if(data.error)throw new Error(data.error.message);
-  return(data.candidates?.[0]?.content?.parts?.[0]?.text||'[]').replace(/```json|```/g,'').trim();
+async function geminiCall(prompt, retries=2){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],tools:[{google_search:{}}],generationConfig:{responseMimeType:'application/json'}})});
+    const data=await r.json();
+    if(data.error){
+      // Rate limit: wait and retry
+      if((data.error.message||'').includes('quota') && retries>0){
+        await sleep(20000);
+        return geminiCall(prompt, retries-1);
+      }
+      throw new Error(data.error.message);
+    }
+    return(data.candidates?.[0]?.content?.parts?.[0]?.text||'[]').replace(/```json|```/g,'').trim();
+  }catch(e){
+    if(retries>0 && e.message && e.message.includes('quota')){
+      await sleep(20000);
+      return geminiCall(prompt, retries-1);
+    }
+    throw e;
+  }
 }
 async function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
@@ -581,7 +596,7 @@ function sw(c){
 
 async function runInsightThenEvents(){
   await runInsight();
-  await sleep(6000);
+  await sleep(15000);
   await fetchEvents();
 }
 
