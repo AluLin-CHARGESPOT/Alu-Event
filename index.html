@@ -870,9 +870,9 @@ function goLogin(){document.getElementById('main-app').style.display='none';docu
 function renderScroll(){
   if(!AL)return;
   const el=document.getElementById('dscroll');
-  const base=new Date();base.setDate(base.getDate()-7);
+  const base=new Date();base.setDate(base.getDate()-3);
   let h='';
-  for(let i=0;i<35;i++){
+  for(let i=0;i<21;i++){
     const d=new Date(base);d.setDate(base.getDate()+i);
     const sel=d.toDateString()===cd.toDateString();
     const wk=d.getDay()===0||d.getDay()===6;
