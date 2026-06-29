@@ -303,7 +303,11 @@ input:focus{border-color:var(--blue)}
             <div class="range-tabs" id="rtabs"></div>
           </div>
         </div>
-        <div class="dscroll" id="dscroll"></div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:0.5px solid var(--border)">
+          <button onclick="scrollDates(-7)" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0"><i class="ti ti-chevron-left"></i></button>
+          <div class="dscroll" id="dscroll" style="flex:1;overflow:hidden;padding:4px 0"></div>
+          <button onclick="scrollDates(7)" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0"><i class="ti ti-chevron-right"></i></button>
+        </div>
         <div class="ecard-hdr">
           <strong id="edate" style="font-size:13px;font-weight:600;color:var(--text)">—</strong>
           <span id="ecnt" style="font-size:12px;color:var(--text3)"></span>
@@ -867,23 +871,30 @@ function enter(){if(!SC)return;sw(SC);document.getElementById('login-page').styl
 function goLogin(){document.getElementById('main-app').style.display='none';document.getElementById('login-page').style.display='flex';}
 
 // ── DATE ─────────────────────────────────────────────────
+let dateScrollOffset = -1; // 從昨天開始
+
 function renderScroll(){
   if(!AL)return;
   const el=document.getElementById('dscroll');
-  const base=new Date();base.setDate(base.getDate()-3);
   let h='';
-  for(let i=0;i<21;i++){
-    const d=new Date(base);d.setDate(base.getDate()+i);
+  for(let i=0;i<7;i++){
+    const d=new Date();
+    d.setDate(d.getDate() + dateScrollOffset + i);
     const sel=d.toDateString()===cd.toDateString();
     const wk=d.getDay()===0||d.getDay()===6;
     const k=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    h+=`<div class="dchip ${sel?'active':wk?'weekend':''}" onclick="pickD('${k}')">
+    h+=`<div class="dchip ${sel?'active':wk?'weekend':''}" onclick="pickD('${k}')" style="flex:1;min-width:0">
       <div class="dc-dow">${AL.days[d.getDay()]}</div>
       <div class="dc-day">${d.getDate()}</div>
       <div class="dc-mon">${AL.mons[d.getMonth()]}</div>
     </div>`;
   }
   el.innerHTML=h;
+}
+
+function scrollDates(delta){
+  dateScrollOffset += delta;
+  renderScroll();
 }
 function pickD(k){
   const[y,m,d]=k.split('-').map(Number);cd=new Date(y,m,d);
