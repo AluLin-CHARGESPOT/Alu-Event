@@ -108,8 +108,8 @@
     .ai-btn-sm:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
     .ai-btn-main{font-size:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:6px 16px;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:auto;white-space:nowrap;font-weight:500}
     .ai-btn-main:hover{opacity:.9;color:#fff}
-    .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    @media(max-width:600px){.tgrid{grid-template-columns:1fr}}
+    .tgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+    @media(max-width:900px){.tgrid{grid-template-columns:repeat(3,1fr)}} @media(max-width:600px){.tgrid{grid-template-columns:1fr 1fr}}
     .tcard{background:#fff;border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;display:flex;gap:10px;align-items:flex-start;box-shadow:0 1px 4px rgba(0,0,0,.04)}
     .ticon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
     .ttitle{font-size:13px;font-weight:600;margin-bottom:3px}
@@ -258,6 +258,7 @@
   </div>
 
   <div class="content">
+    <!-- Date nav -->
     <div class="date-nav">
       <div class="page-title" id="ptitle">—</div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -270,30 +271,62 @@
       </div>
     </div>
 
-    <div class="sec-label">
-      <i class="ti ti-train" style="font-size:14px"></i>
-      <span id="ltraf">—</span>
-      <button class="ai-btn-sm" onclick="fetchTraffic()">
-        <i class="ti ti-sparkles"></i><span id="ltrafb">—</span>
-      </button>
-    </div>
-    <div class="tgrid" id="tgrid"></div>
+    <!-- Two column layout -->
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start">
 
-    <div class="sec-label">
-      <i class="ti ti-calendar" style="font-size:14px"></i>
-      <span id="ldscroll">—</span>
-      <button class="ai-btn-main" onclick="fetchEvents()">
-        <i class="ti ti-sparkles"></i><span id="lsearch">—</span>
-      </button>
-    </div>
-    <div class="dscroll" id="dscroll"></div>
+      <!-- Left: main content -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="sec-label">
+          <i class="ti ti-train" style="font-size:14px"></i>
+          <span id="ltraf">—</span>
+          <button class="ai-btn-sm" onclick="fetchTraffic()">
+            <i class="ti ti-sparkles"></i><span id="ltrafb">—</span>
+          </button>
+        </div>
+        <div class="tgrid" id="tgrid"></div>
 
-    <div class="ecard">
-      <div class="ecard-hdr">
-        <strong id="edate" style="font-size:14px;font-weight:600;color:var(--text)">—</strong>
-        <span id="ecnt" style="font-size:12px;color:var(--text3)"></span>
+        <div class="sec-label">
+          <i class="ti ti-calendar" style="font-size:14px"></i>
+          <span id="ldscroll">—</span>
+          <button class="ai-btn-main" onclick="fetchEvents()">
+            <i class="ti ti-sparkles"></i><span id="lsearch">—</span>
+          </button>
+        </div>
+        <div class="dscroll" id="dscroll"></div>
+
+        <div class="ecard">
+          <div class="ecard-hdr">
+            <strong id="edate" style="font-size:14px;font-weight:600;color:var(--text)">—</strong>
+            <span id="ecnt" style="font-size:12px;color:var(--text3)"></span>
+          </div>
+          <div id="ebody"><div class="hint">—</div></div>
+        </div>
       </div>
-      <div id="ebody"><div class="hint">—</div></div>
+
+      <!-- Right: venue panel -->
+      <div style="display:flex;flex-direction:column;gap:12px;position:sticky;top:72px">
+        <div style="background:#fff;border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:0.5px solid var(--border);background:var(--bg)">
+            <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text)">
+              <i class="ti ti-building" style="font-size:15px;color:var(--blue)"></i>
+              <span id="lbl-venues">關注場域官網</span>
+            </div>
+            <span style="font-size:10px;color:var(--text3);background:var(--info-bg);border:0.5px solid var(--info-border);padding:1px 7px;border-radius:10px;color:var(--info-text)">AI 優先爬取</span>
+          </div>
+          <div style="padding:10px 14px;font-size:12px;color:var(--text3);border-bottom:0.5px solid var(--border)">
+            有填官網 → AI 優先抓取精準資料<br>未填官網 → AI 自動 Google 搜尋
+          </div>
+          <div id="venue-list" style="max-height:280px;overflow-y:auto"></div>
+          <div style="padding:10px 14px;border-top:0.5px solid var(--border);display:flex;flex-direction:column;gap:6px">
+            <input type="text" id="v-name" placeholder="場域名稱（如：東京ドーム）" style="font-size:12px;height:32px"/>
+            <input type="text" id="v-url" placeholder="官網 URL（選填）" style="font-size:12px;height:32px"/>
+            <button onclick="addVenue()" style="font-size:12px;height:32px;background:var(--blue);color:#fff;border:none;display:flex;align-items:center;justify-content:center;gap:4px">
+              <i class="ti ti-plus"></i> 新增場域
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -578,23 +611,29 @@ function apply(loc){
   const u=loc.ui;
   document.getElementById('tsub').textContent=loc.langName;
   document.getElementById('ptitle').textContent=u.rangeTitle[cr]||u.rangeTitle.day;
-  const rs=['day','week','month','report'];
-  document.getElementById('rtabs').innerHTML=u.rangeTabs.map((t,i)=>`<div class="rtab ${cr===rs[i]?'active':''}" onclick="setR('${rs[i]}',this)">${t}</div>`).join('');
+  // 只顯示單日、一週、一個月（移除運補週報）
+  const rs=['day','week','month'];
+  const tabs=u.rangeTabs.slice(0,3);
+  document.getElementById('rtabs').innerHTML=tabs.map((t,i)=>`<div class="rtab ${cr===rs[i]?'active':''}" onclick="setR('${rs[i]}',this)">${t}</div>`).join('');
   document.getElementById('ltraf').textContent=u.trafficLabel;
   document.getElementById('ltrafb').textContent=u.trafficBtn;
   document.getElementById('ldscroll').textContent=u.dateScrollLabel;
   document.getElementById('lsearch').textContent=u.searchBtn;
   document.getElementById('tml').textContent=u.switchMarket;
+  // 場域官網標題也跟語言走
+  const venueLabel=loc.lang==='ja'?'注目会場・公式サイト':loc.lang==='en'?'Venue Websites':loc.lang==='ko'?'관심 장소 공식 사이트':'關注場域官網';
+  document.getElementById('lbl-venues').textContent=venueLabel;
   document.getElementById('tgrid').innerHTML=loc.traffic.map(t=>`
     <div class="tcard">
       <div class="ticon" style="background:${t.bg}">${t.icon}</div>
       <div><div class="ttitle" style="color:${t.color}">${t.label}</div>
       <div class="tdesc">${t.desc}</div>
-      <div class="tbadge" style="background:${t.bg};color:${t.color}"><i class="ti ti-sparkles" style="font-size:10px"></i> ${u.trafficBtn} →</div></div>
+      <div class="tbadge" style="background:${t.bg};color:${t.color}"><i class="ti ti-chart-bar" style="font-size:10px"></i> 即時分析</div></div>
     </div>`).join('');
   document.getElementById('ebody').innerHTML=`<div class="hint">${u.eventsHint}</div>`;
   document.getElementById('ecnt').textContent='';
   updDate();renderScroll();
+  renderVenues();
 }
 
 function sw(c){
@@ -603,7 +642,57 @@ function sw(c){
   document.getElementById('tn').textContent=c.name;
   document.getElementById('tm').classList.remove('open');
   document.getElementById('tt').classList.remove('open');
+  cr='day';
   apply(AL);
+  // 進入後自動執行：交通+天氣分析、活動搜尋
+  setTimeout(()=>fetchTrafficAndWeather(),300);
+  setTimeout(()=>fetchEvents(),800);
+}
+
+// ── VENUE MANAGEMENT ─────────────────────────────────────
+function getVenues(){
+  if(!AC)return[];
+  const key=`cs_venues_${AC.name}`;
+  try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(e){return[]}
+}
+function saveVenues(v){
+  if(!AC)return;
+  localStorage.setItem(`cs_venues_${AC.name}`,JSON.stringify(v));
+}
+function renderVenues(){
+  const el=document.getElementById('venue-list');
+  if(!el)return;
+  const vs=getVenues();
+  if(!vs.length){
+    el.innerHTML=`<div style="padding:14px;font-size:12px;color:var(--text3);text-align:center">尚未新增場域<br>新增後 AI 搜尋時會優先爬取</div>`;
+    return;
+  }
+  el.innerHTML=vs.map((v,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--border)">
+      <div style="width:6px;height:6px;border-radius:50%;background:${v.url?'#3B6D11':'#94A3B8'};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.name}</div>
+        <div style="font-size:11px;color:${v.url?'var(--blue)':'var(--text3)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.url?v.url.replace('https://',''):'AI 自動搜尋'}</div>
+      </div>
+      <button onclick="removeVenue(${i})" style="padding:2px 6px;font-size:11px;color:var(--text3);flex-shrink:0"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+function addVenue(){
+  const name=document.getElementById('v-name').value.trim();
+  const url=document.getElementById('v-url').value.trim();
+  if(!name)return;
+  const vs=getVenues();
+  vs.push({name,url});
+  saveVenues(vs);
+  document.getElementById('v-name').value='';
+  document.getElementById('v-url').value='';
+  renderVenues();
+}
+function removeVenue(i){
+  const vs=getVenues();
+  vs.splice(i,1);
+  saveVenues(vs);
+  renderVenues();
 }
 
 function fil(w,q){
@@ -705,17 +794,43 @@ function setR(r,el){
   el.classList.add('active');updDate();
 }
 
-async function fetchTraffic(){
-  if(busy||!AL)return;busy=true;
+async function fetchTrafficAndWeather(){
+  if(!AL||!AC)return;
   const tg=document.getElementById('tgrid');
+  const countryName=AC.name;
   tg.innerHTML=`<div class="tcard" style="grid-column:1/-1;justify-content:center"><div class="loading"><div class="spin"></div>${AL.ui.trafficLoading}</div></div>`;
+
+  // 天氣 prompt（各語言）
+  const weatherPrompt={
+    zh:`請搜尋並分析「${countryName}」本週主要城市的天氣狀況，找出哪些城市或地區會有極端天氣（颱風、暴雨、高溫、寒流等），對人潮聚集和 CHARGESPOT 租借需求的影響。只回傳JSON（不要markdown）：[{"icon":"🌧️","title":"天氣重點標題","desc":"一句說明","level":"high|medium|low"}]`,
+    'zh-CN':`请搜索分析「${countryName}」本周主要城市天气，找出极端天气影响。只返回JSON（不要markdown）：[{"icon":"🌧️","title":"天气重点","desc":"一句说明","level":"high|medium|low"}]`,
+    ja:`「${countryName}」今週の主要都市の天気を分析してください。台風・大雨・高温・寒波などの影響とCHARGESPOTへの需要影響を含めて。JSONのみ（markdownなし）：[{"icon":"🌧️","title":"タイトル","desc":"説明","level":"high|medium|low"}]`,
+    ko:`「${countryName}」이번 주 주요 도시 날씨 분석. 극단적 날씨가 CHARGESPOT 수요에 미치는 영향 포함. JSON만（markdown 없이）：[{"icon":"🌧️","title":"제목","desc":"설명","level":"high|medium|low"}]`,
+    en:`Search and analyse the weather in major cities of ${countryName} this week. Identify extreme weather (typhoon, heavy rain, heatwave, cold snap) and impact on crowd gathering and CHARGESPOT rental demand. Return JSON only (no markdown): [{"icon":"🌧️","title":"title","desc":"detail","level":"high|medium|low"}]`,
+    fr:`Analysez la météo dans les principales villes de ${countryName} cette semaine. Identifiez les conditions météo extrêmes et l'impact sur la demande CHARGESPOT. JSON uniquement: [{"icon":"🌧️","title":"t","desc":"d","level":"high|medium|low"}]`,
+    de:`Analysieren Sie das Wetter in den Hauptstädten von ${countryName} diese Woche. Extremwetter und Auswirkungen auf CHARGESPOT. Nur JSON: [{"icon":"🌧️","title":"t","desc":"d","level":"high|medium|low"}]`,
+    es:`Analiza el clima en las principales ciudades de ${countryName} esta semana. Clima extremo e impacto en CHARGESPOT. Solo JSON: [{"icon":"🌧️","title":"t","desc":"d","level":"high|medium|low"}]`,
+    pt:`Analise o clima nas principais cidades de ${countryName} esta semana. Clima extremo e impacto no CHARGESPOT. Somente JSON: [{"icon":"🌧️","title":"t","desc":"d","level":"high|medium|low"}]`,
+  };
+  const wPrompt=weatherPrompt[AL.lang]||weatherPrompt.en;
+
   try{
-    const text=await geminiCall(AL.trafficPrompt);
-    let items=[];try{items=JSON.parse(text)}catch(e){}
+    // 同時呼叫交通和天氣
+    const [trafficText, weatherText] = await Promise.all([
+      geminiCall(AL.trafficPrompt),
+      geminiCall(wPrompt)
+    ]);
+    let traffic=[];let weather=[];
+    try{traffic=JSON.parse(trafficText)}catch(e){}
+    try{weather=JSON.parse(weatherText)}catch(e){}
+    const all=[...traffic,...weather];
     const bg={high:'#FAEEDA',medium:'#EAF3DE',low:'#E6F1FB'};
     const cl={high:'#854F0B',medium:'#27500A',low:'#0C447C'};
-    if(!items.length){tg.innerHTML=`<div class="tcard" style="grid-column:1/-1"><div style="padding:16px;font-size:13px;color:var(--text3)">暫無資料，請稍後再試</div></div>`;busy=false;return;}
-    tg.innerHTML=items.map(t=>`
+    if(!all.length){
+      tg.innerHTML=`<div class="tcard" style="grid-column:1/-1"><div style="padding:16px;font-size:13px;color:var(--text3)">暫無資料</div></div>`;
+      return;
+    }
+    tg.innerHTML=all.map(t=>`
       <div class="tcard">
         <div class="ticon" style="background:${bg[t.level]||'#E6F1FB'};font-size:20px">${t.icon}</div>
         <div><div class="ttitle" style="color:${cl[t.level]||'#0C447C'}">${t.title}</div>
@@ -727,18 +842,30 @@ async function fetchTraffic(){
   }catch(e){
     tg.innerHTML=`<div class="tcard" style="grid-column:1/-1"><div style="color:#A32D2D;padding:16px;font-size:13px">❌ ${e.message||'請確認 API Key 是否正確'}</div></div>`;
   }
-  busy=false;
 }
+// 保留舊的 fetchTraffic 讓按鈕也能用
+async function fetchTraffic(){ fetchTrafficAndWeather(); }
 
 async function fetchEvents(){
   if(busy||!AL||!AC)return;busy=true;
   const el=document.getElementById('ebody');
   el.innerHTML=`<div class="loading"><div class="spin"></div>${AL.ui.searching}</div>`;
   const ds=`${cd.getFullYear()}-${String(cd.getMonth()+1).padStart(2,'0')}-${String(cd.getDate()).padStart(2,'0')}`;
-  const rm={ja:{day:'1日間',week:'7日間',month:'1ヶ月',report:'週末'},ko:{day:'하루',week:'일주일',month:'한 달',report:'이번 주말'},fr:{day:'1 jour',week:'1 semaine',month:'1 mois',report:'ce week-end'},de:{day:'1 Tag',week:'1 Woche',month:'1 Monat',report:'dieses Wochenende'},es:{day:'1 día',week:'1 semana',month:'1 mes',report:'este fin de semana'},pt:{day:'1 dia',week:'1 semana',month:'1 mês',report:'este fim de semana'},en:{day:'1 day',week:'1 week',month:'1 month',report:'this weekend'},zh:{day:'當天',week:'一週',month:'一個月',report:'本週週末'},'zh-CN':{day:'当天',week:'一周',month:'一个月',report:'本周末'}};
+  const rm={ja:{day:'1日間',week:'7日間',month:'1ヶ月'},ko:{day:'하루',week:'일주일',month:'한 달'},fr:{day:'1 jour',week:'1 semaine',month:'1 mois'},de:{day:'1 Tag',week:'1 Woche',month:'1 Monat'},es:{day:'1 día',week:'1 semana',month:'1 mes'},pt:{day:'1 dia',week:'1 semana',month:'1 mês'},en:{day:'1 day',week:'1 week',month:'1 month'},zh:{day:'當天',week:'一週',month:'一個月'},'zh-CN':{day:'当天',week:'一周',month:'一个月'}};
   const r=rm[AL.lang]||rm.zh;
+  // 加入用戶自訂場域官網
+  const venues=getVenues();
+  const venueUrls=venues.filter(v=>v.url).map(v=>`${v.name}(${v.url})`).join('、');
+  const venueNames=venues.map(v=>v.name).join('、');
+  const basePrompt=AL.eventPrompt(ds,r[cr]||r.day);
+  const finalPrompt=venueUrls
+    ? basePrompt.replace('Return JSON only','請優先參考以下官網：'+venueUrls+'。Return JSON only')
+               .replace('只回傳JSON','請優先參考以下官網：'+venueUrls+'。只回傳JSON')
+               .replace('JSONのみ','以下の公式サイトを優先的に参照してください：'+venueUrls+'。JSONのみ')
+               .replace('JSON만 반환','다음 공식 사이트를 우선 참조하세요: '+venueUrls+'。JSON만 반환')
+    : basePrompt;
   try{
-    const text=await geminiCall(AL.eventPrompt(ds,r[cr]||r.day));
+    const text=await geminiCall(finalPrompt);
     let ev=[];try{ev=JSON.parse(text)}catch(e){}
     renderEv(ev);
   }catch(e){
